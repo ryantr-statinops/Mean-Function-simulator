@@ -75,7 +75,6 @@ summary_stats <- data.frame(
   theoretical_mean = theoretical_means,
   ci_lower = conf_intervals[, 1],
   ci_upper = conf_intervals[, 2],
-  # SỬA LỖI: th eoretical_means -> theoretical_means
   relative_error = abs((simulated_means - theoretical_means) / theoretical_means) * 100
 )
 
@@ -83,11 +82,11 @@ summary_stats <- data.frame(
 main_plot <- ggplot(summary_stats, aes(x = n)) +
   geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), fill = "lightblue", alpha = 0.4) +
   geom_line(aes(y = simulated_mean, color = "Giá trị mô phỏng"), linewidth = 1.2) +
-  geom_point(aes(y = simulated_mean), color = "darkblue", size = 2) +
+  geom_point(aes(y = simulated_mean, color = "Giá trị mô phỏng"), size = 2) +
   geom_line(aes(y = theoretical_mean, color = "Giá trị lý thuyết"), linewidth = 1, linetype = "dashed") +
-  geom_point(aes(y = theoretical_mean), color = "darkred", size = 1.8, shape = 17) +
+  geom_point(aes(y = theoretical_mean, color = "Giá trị lý thuyết"), size = 1.8, shape = 17) +
   scale_color_manual(name = NULL, values = c("Giá trị mô phỏng" = "darkblue", "Giá trị lý thuyết" = "darkred")) +
-  scale_y_continuous(labels = scales::dollar_format(prefix = "$", accuracy = 1), expand = expansion(mult = c(0.05, 0.1))) +
+  scale_y_continuous(labels = scales::label_dollar(prefix = "$", accuracy = 1), expand = expansion(mult = c(0.05, 0.1))) +
   labs(x = "Thời gian (n năm)", y = "Giá trị kỳ vọng E[X_n]") +
   theme_minimal(base_size = 12) +
   theme(legend.position = c(0.2, 0.85), 
@@ -102,8 +101,16 @@ plot_r_distribution <- ggplot(data.frame(R = R_values), aes(x = R)) +
 
 plot_error <- ggplot(summary_stats, aes(x = n, y = relative_error)) +
   geom_line(color = "purple3", linewidth = 1) +
-  labs(title = "Sai số tương đối", x = "Năm", y = "Sai số (%)") +
-  theme_minimal(base_size = 10)
+  geom_point(color = "purple4", size = 2) +
+  geom_hline(yintercept = mean(summary_stats$relative_error),
+             color = "darkgreen", linetype = "dotted", linewidth = 0.8) +
+  annotate("text", x = n_max * 0.7, y = mean(summary_stats$relative_error),
+           label = paste("TB:", round(mean(summary_stats$relative_error), 3), "%"),
+           vjust = -1, color = "darkgreen", size = 3) +
+  labs(title = "Sai số tương đối (%)", x = "Năm (n)", y = "Sai số (%)") +
+  scale_x_continuous(breaks = seq(0, n_max, by = 5)) +
+  theme_minimal(base_size = 10) +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5))
 
 # 8. KẾT HỢP BIỂU ĐỒ ===========================================================
 final_plot <- grid.arrange(
@@ -111,6 +118,10 @@ final_plot <- grid.arrange(
   layout_matrix = rbind(c(1,1,2), c(1,1,3)),
   top = textGrob("MÔ PHỎNG QUÁ TRÌNH NGẪU NHIÊN - VÍ DỤ 14", gp = gpar(fontsize = 16, fontface = "bold"))
 )
+
+# 9. XUẤT BIỂU ĐỒ ===============================================================
+ggsave("simulation_result.png", final_plot, width = 12, height = 7, dpi = 300)
+print(final_plot)
 
 # 10. HIỂN THỊ KẾT QUẢ THỐNG KÊ ===============================================
 cat("\n", strrep("=", 70), "\n")
